@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>PDFMark</string>
+	<key>CFBundleDisplayName</key>
+	<string>PDFMark</string>
+	<key>CFBundleIdentifier</key>
+	<string>no.pdfmark.app.dev2</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleExecutable</key>
+	<string>PDFMark</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>PDFMark needs access to control other applications in order to detect which PDF file is open in Preview.</string>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>PDFMark needs Accessibility access to read which page you're viewing in Preview, so the correct bookmark can be set. Grant this in System Settings → Privacy &amp; Security → Accessibility.</string>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Set PDF Bookmark Here</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>addBookmarkService</string>
+			<key>NSPortName</key>
+			<string>PDFMark</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+				<string>NSStringPboardType</string>
+			</array>
+			<key>NSReturnTypes</key>
+			<array/>
+		</dict>
+	</array>
+</dict>
+</plist>

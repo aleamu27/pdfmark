@@ -1,0 +1,33 @@
+# Swift Package Manager / build artifacts
+.build/
+build/
+*.o
+*.swiftmodule
+
+# Xcode / SwiftPM local
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# App runtime debug log
+pdfmark_debug.log
+
+# Spike scratch binaries (keep the .swift sources, drop the compiled outputs)
+Spikes/ax_dump
+Spikes/ax_page_geo
+Spikes/ax_title
+Spikes/ax_trust_check
+Spikes/annotation_test
+Spikes/check_trust
+Spikes/custom_attr_test
+Spikes/remove_test_bookmark
+Spikes/ribbon_test
+Spikes/verify_annotation
+Spikes/verify_outline
+Spikes/verify_outline2
+Spikes/verify_outline3
+Spikes/write_original_test
+Spikes/write_test
+Spikes/dump1.txt
