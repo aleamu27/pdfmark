@@ -1,254 +1,256 @@
-# PDFMark
+<p align="center">
+  <img src="docs/images/icon.png" width="128" height="128" alt="PDFMark app icon">
+</p>
 
-> A tiny macOS menu-bar app that drops a **real PDF outline bookmark** — plus a
-> small red corner ribbon — onto whatever page you're currently viewing in
-> **Preview.app**. One click, no fiddling with the PDF itself.
+<h1 align="center">PDFMark</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-black?logo=apple" alt="macOS 13+">
-  <img src="https://img.shields.io/badge/Swift-5.9-orange?logo=swift" alt="Swift 5.9">
-  <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20PDFKit-blue" alt="AppKit + PDFKit">
-  <img src="https://img.shields.io/badge/deps-zero-brightgreen" alt="Zero dependencies">
+  <b>Bookmarks and comments for the PDFs you read in Preview — saved right in the file.</b><br>
+  A tiny menu-bar app for macOS. One click while you read, nothing to set up.
+</p>
+
+<p align="center">
+  <a href="https://github.com/aleamu27/pdfmark/releases/latest"><img src="https://img.shields.io/badge/Download-PDFMark%20for%20Mac-5B6BFA?style=for-the-badge&logo=apple&logoColor=white" alt="Download PDFMark for Mac"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-13%2B-black?logo=apple" alt="macOS 13+">
+  <img src="https://img.shields.io/badge/Apple%20Silicon%20%2B%20Intel-universal-555" alt="Universal">
+  <img src="https://img.shields.io/badge/dependencies-none-brightgreen" alt="No dependencies">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license">
+</p>
+
+<p align="center">
+  <img src="docs/images/hero.png" alt="PDFMark's menu open over a two-page PDF in Preview, showing a bookmark ribbon and comment notes on the pages">
 </p>
 
 ---
 
-## Why
+## Why PDFMark?
 
-Preview can *show* PDFs beautifully, but it can't **add** persistent outline
-bookmarks to an arbitrary document. PDFMark fills that gap: while you read in
-Preview, hit the menu-bar icon, confirm the page, and PDFMark writes a genuine
-`PDFOutline` entry back into the file — visible in Preview's table of contents
-(`⌘⌥3`) and in every other PDF viewer, because it's baked into the document, not
-stored in some sidecar database.
+Preview is a great PDF reader, but it can't place a lasting bookmark or a
+well-placed comment without getting in your way. PDFMark sits in the menu bar
+and does exactly that, on whatever page you're reading.
 
-## What it does
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🔖 Real bookmarks</h3>
+      A genuine outline entry in the PDF plus a red ribbon on the page. It shows
+      up in Preview's table of contents (<code>⌘⌥3</code>) and in every other PDF app.
+    </td>
+    <td width="50%" valign="top">
+      <h3>💬 Comments where you want them</h3>
+      Drag the note to the exact spot, on either page of a spread, pick a color
+      and type. Saved as a standard PDF note that opens in any viewer.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🗂 All comments in one place</h3>
+      Search, edit, recolor, move notes to another page, jump to them in Preview,
+      or copy them all as text. Notes made in Preview show up too.
+    </td>
+    <td valign="top">
+      <h3>↩️ Undo everything</h3>
+      Every change can be undone from the menu. PDFMark keeps the last 20 versions
+      of each document and only ever changes what you ask it to.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>📄 Stays in the file</h3>
+      No library, no account, no sidecar database. Send the PDF to someone and
+      your bookmarks and notes go with it.
+    </td>
+    <td valign="top">
+      <h3>🔒 Private by design</h3>
+      PDFMark never connects to the internet. It reads which page Preview shows
+      and writes to the PDF on your Mac. That's it.
+    </td>
+  </tr>
+</table>
 
-```
-┌──────────────┐        ┌────────────────────┐        ┌─────────────────────┐
-│  Preview.app │        │      PDFMark        │        │   your-file.pdf     │
-│  (you read)  │ ─AX──▶ │  detect page + file │ ─PDFKit▶ │  + outline entry    │
-│              │ ◀reload─│  write bookmark     │        │  + corner ribbon 🔖 │
-└──────────────┘        └────────────────────┘        └─────────────────────┘
-```
+## How it works
 
-1. **Detects the current page** in the frontmost Preview window using the macOS
-   Accessibility (AX) API — no polling of Preview's window title, which is
-   unreliable (see [Page detection](#page-detection-the-interesting-bit)).
-2. **Shows a confirm panel** pre-filled with the guessed page number, so you can
-   nudge it if needed.
-3. **Writes the bookmark** straight into the PDF on disk via PDFKit:
-   - a `PDFOutline` entry pointing at the page, and
-   - a small red **ribbon annotation** in the top-right corner of that page.
-4. **Reloads & scrolls** — PDFMark closes the document's Preview window, reopens
-   the file (so the change is visible immediately) and asks Preview, via AX, to
-   scroll back to the same page.
+<p align="center">
+  <img src="docs/images/how-it-works.png" alt="Three steps: read in Preview, click the menu-bar icon, the bookmark and comment are saved into the PDF">
+</p>
 
-Only **one PDFMark bookmark is kept per document** — setting a new one cleanly
-removes the previous outline entry and ribbon first, without ever touching the
-document's own pre-existing table of contents.
+1. **Read** a PDF in Preview.
+2. **Click** the bookmark icon in the menu bar. The menu shows the document and
+   page you're on: choose **Bookmark This Page** or **Add Comment…**.
+3. **Done.** PDFMark writes the change into the file and reopens it in Preview
+   at the same page, so you see it immediately.
 
-### Comments
+Only one PDFMark bookmark is kept per document: setting a new one moves it,
+and your document's own table of contents is never changed.
 
-Click the menu-bar icon → **Add Comment…** while reading. The comment panel
-shows the pages on screen (both halves of a two-page spread) — **click or drag
-the note** to the exact spot you want, on either page, pick a color, type, and
-press **⌘↩**. PDFMark writes a standard PDF **note annotation** (`/Subtype /Text`):
-a small icon on top of the page that never alters its content and opens a popup
-with your text in Preview and any other viewer.
+## Looks good everywhere
 
-**Show All Comments…** opens a comments window for the document:
+<p align="center">
+  <img src="docs/images/markers.png" alt="The bookmark ribbon and comment notes in six colors">
+</p>
 
-- every note grouped by page (including notes made in Preview), with search;
-- edit the text, change the color, or **move a note to another page**;
-- *Show in Preview* jumps to the note's page; *Copy All* copies every comment as text;
-- delete one note (⌫) or all of them — PDFMark asks for confirmation first.
+The ribbon and the notes are crisp vector artwork stored in the PDF itself (as
+standard annotation appearances), so they look the same in any PDF viewer that
+shows annotations, not just in Preview. They sit *on top of* the page and never
+change its content.
 
-### Undo & safety
+## Install
 
-Every change PDFMark makes — bookmark, comment, edit, move, delete — can be
-undone from the menu (*Undo “…”*) or the comments window. Before each change a
-copy of the PDF is kept in `~/Library/Application Support/PDFMark/Undo` (last 20
-per document). Preview's window is closed while the file changes (so Preview
-saves its own edits first and neither side overwrites the other), then the PDF
-is reopened at the same page, so the change is visible immediately.
+1. **[Download the latest `PDFMark.dmg`](https://github.com/aleamu27/pdfmark/releases/latest)**,
+   open it and drag **PDFMark** into **Applications**.
+2. Open PDFMark from Applications.
+   <details>
+   <summary>macOS says it can't verify the developer?</summary>
 
----
-
-## Page detection (the interesting bit)
-
-Preview's window title (`AXTitle`, e.g. *"Side 3 av 28"*) looks tempting but is a
-trap — it only reflects the live page transiently right after a scroll, then goes
-stale. PDFMark instead works **geometrically**.
-
-Inside the `AXScrollArea` that holds the `AXPage` children, let the scroll area's
-visible frame have origin $(v_x, v_y)$ and height $v_h$. Its vertical center is
-
-$$
-c_y \;=\; v_y + \frac{v_h}{2}.
-$$
-
-Each page $P_i$ reports a position and size via `kAXPositionAttribute` /
-`kAXSizeAttribute`, giving a vertical extent $[\,y^{\text{bot}}_i,\; y^{\text{top}}_i\,]$.
-The current page is the one whose extent straddles that center line:
-
-$$
-p^\star \;=\; \Big\{\, P_i \;\big|\; y^{\text{bot}}_i \;\le\; c_y \;\le\; y^{\text{top}}_i \,\Big\}.
-$$
-
-This is robust across sidebar-on/off toggles and window resizes, where the title
-heuristic falls apart.
-
-## Ribbon placement
-
-The visible marker is a custom `PDFAnnotation` whose bounding box, in the page's
-media-box coordinates $(W_{\text{media}}, H_{\text{media}})$, is anchored to the
-top-right corner with a fixed right margin $m_r$:
-
-$$
-\mathrm{ribbon} \;=\;
-\big(\; W_{\text{media}} - m_r - w_r,\;\; H_{\text{media}} - h_r,\;\; w_r,\;\; h_r \;\big),
-$$
-
-with $(w_r, h_r) = (24, 44)$ points and $m_r = 30$ points. PDFKit bakes the
-result of the annotation's `draw(with:in:)` into the saved appearance stream, so
-the ribbon renders identically in **any** viewer afterwards — not just inside
-PDFKit.
-
-## Invisible tagging (so it's undoable)
-
-PDFMark needs to find *its own* additions later without cluttering the document:
-
-| Addition        | Tag                                             | Visible to user? |
-| --------------- | ----------------------------------------------- | ---------------- |
-| Outline entry   | zero-width space `\u{200B}` appended to label   | No               |
-| Ribbon annotation | `userName = "PDFMark"` (the PDF `/T` field)   | No               |
-
-These survive `PDFDocument.write(to:)`; a custom `documentAttributes` key was
-tried first and does **not** persist, so it isn't used.
-
-### Look of the markers
-
-The ribbon and the note icons are PDFMark's own vector artwork
-(`MarkerArt.swift`), not the viewer's dated default sticky-note glyph. Notes are a
-rounded badge in the note's color with a white speech bubble; the ribbon has a
-soft fabric shading and a fold where it meets the page edge. Both are baked into
-the annotation's appearance stream on save, so they look the same in Preview and
-every other PDF viewer. The same drawing is used for the markers inside
-PDFMark's own panels, and for the app icon (`scripts/make_icon.sh`).
-
-> PDF shadings can't carry transparency (it renders as black), so the artwork
-> uses only opaque gradients plus solid-alpha fills and shadows.
-
----
-
-## Installing (for users)
-
-1. Download `PDFMark-<version>.dmg`, open it and **drag PDFMark into Applications**.
-   (Running it straight from Downloads or the disk image makes macOS forget its
-   permissions — PDFMark warns about this.)
-2. Open PDFMark from Applications. Until it is notarized by Apple, macOS will say
-   it can't verify the developer the first time: click **Done**, then go to
+   PDFMark isn't notarized by Apple yet. Click **Done**, open
    *System Settings → Privacy & Security*, scroll down and click **Open Anyway**.
-   This is needed only once.
-3. The introduction window walks you through granting **Accessibility** access.
-   After switching it on, click **Restart PDFMark**.
+   You only need to do this once.
+   </details>
+3. Follow the short introduction: switch PDFMark on under
+   *Accessibility* in System Settings, then click **Restart PDFMark**.
 
-Nothing else to install: it's one universal app (Apple Silicon + Intel) for
-macOS 13 or later, using only system frameworks. Optional: *Open at Login* in the
-menu.
+<p align="center">
+  <img src="docs/images/onboarding.png" width="380" alt="PDFMark's welcome window with the four steps and the Accessibility status">
+</p>
 
-## Releasing
+That's all: one app, no other downloads. Turn on **Open at Login** in the menu
+if you want PDFMark always ready.
+
+<details>
+<summary><b>Why does PDFMark need Accessibility access?</b></summary>
+
+Preview doesn't tell other apps which page or file you're looking at. With
+Accessibility access PDFMark can read that from Preview's window (and scroll
+back to the right page after saving). It doesn't read or record anything else.
+</details>
+
+<details>
+<summary><b>Is my PDF safe?</b></summary>
+
+Before every change PDFMark saves a copy of the PDF in
+`~/Library/Application Support/PDFMark/Undo` (the last 20 per document), and
+Preview's window is closed while the file is written so Preview's own edits are
+saved first. Use **Undo** in the menu to go back.
+</details>
+
+## Requirements
+
+- macOS 13 Ventura or later, on Apple Silicon or Intel
+- Preview (built into macOS)
+
+---
+
+## For developers
+
+PDFMark is Swift + AppKit + PDFKit with a little SwiftUI, built with Swift
+Package Manager. **No third-party dependencies, no Xcode project.**
 
 ```bash
-./scripts/release.sh    # → dist/PDFMark-<version>.dmg and .zip (universal, release build)
+./build.sh                    # dev build → build/PDFMark.app (signed with your Apple Development cert)
+open build/PDFMark.app
+
+./scripts/release.sh          # universal release → dist/PDFMark-<version>.dmg + .zip
+./scripts/make_icon.sh        # regenerate Resources/AppIcon.icns
+./scripts/make_readme_images.sh  # regenerate the images in docs/images/
 ```
 
-With a **Developer ID Application** certificate in the keychain the app and DMG
-are signed with it (hardened runtime); add `NOTARY_PROFILE=<profile>` to also
-notarize and staple, which removes the "Open Anyway" step for users entirely:
+<details>
+<summary><b>Releasing, signing & notarization</b></summary>
+
+With a **Developer ID Application** certificate in the keychain, `release.sh`
+signs the app and DMG with it (hardened runtime). Set `NOTARY_PROFILE` to also
+notarize and staple, which removes the "Open Anyway" step for users:
 
 ```bash
 xcrun notarytool store-credentials pdfmark --apple-id <apple-id> --team-id <team-id>
 NOTARY_PROFILE=pdfmark ./scripts/release.sh
 ```
 
-Without one, the release is ad-hoc signed. Bump `CFBundleShortVersionString` /
-`CFBundleVersion` in `Resources/Info.plist` before each release. The release
-uses bundle id `no.pdfmark.app`; `build.sh` dev builds use `no.pdfmark.app.dev2`,
-so their Accessibility grants never interfere.
+Without one the release is ad-hoc signed. Bump `CFBundleShortVersionString` /
+`CFBundleVersion` in `Resources/Info.plist` before each release, then attach the
+DMG to a GitHub release. Releases use bundle id `no.pdfmark.app`; `build.sh`
+dev builds use `no.pdfmark.app.dev2`, so their Accessibility grants never
+interfere. `build.sh` signs with a stable Apple Development identity because TCC
+keys the Accessibility grant to the code signature — ad-hoc signatures change
+every build and silently revoke it.
+</details>
 
-## Build & run (development)
+<details>
+<summary><b>Page detection</b></summary>
 
-Requires macOS 13+ and a Swift toolchain (Xcode command-line tools).
+Preview's window title (`AXTitle`, e.g. *"Page 3 of 28"*) only reflects the live
+page transiently right after a scroll, then goes stale. PDFMark reads the page
+from Preview's accessibility tree instead: the `AXPage` elements that are
+currently visible (`AXVisibleChildren`), with a geometric fallback — inside the
+`AXScrollArea` holding the pages, the current page is the one whose vertical
+extent straddles the center of the visible frame:
 
-```bash
-./build.sh              # builds .build/, bundles build/PDFMark.app, code-signs it
-open build/PDFMark.app  # launches into the menu bar
-```
+$$
+c_y = v_y + \frac{v_h}{2}, \qquad
+p^\star = \{\, P_i \mid y^{\text{bot}}_i \le c_y \le y^{\text{top}}_i \,\}.
+$$
 
-`build.sh` signs with a stable **Apple Development** identity when one is present
-in your keychain (falling back to ad-hoc). This matters: TCC keys the
-Accessibility grant to the binary's designated requirement, and a stable cert
-keeps the grant alive across rebuilds instead of silently revoking it every time.
+The same tree is used to find the open file and to scroll Preview back to a
+page (`AXScrollToVisible`) after the PDF is reopened.
+</details>
 
-### First run
+<details>
+<summary><b>What PDFMark writes into the PDF</b></summary>
 
-1. PDFMark lives in the **menu bar** (no Dock icon — it's an `LSUIElement`).
-2. Grant **Accessibility** access when prompted
-   (*System Settings → Privacy & Security → Accessibility*). This is required to
-   read the current page from Preview.
-   > ⚠️ `AXIsProcessTrusted()` caches its result for the process lifetime — if you
-   > grant access while PDFMark is already running, **quit and relaunch** it.
-3. Open a PDF in Preview, scroll to a page, **click the menu-bar icon** and pick
-   *Bookmark This Page* or *Add Comment…*.
-4. Confirm the page in the panel → the bookmark/comment is written and Preview jumps to it.
+| Addition | PDF object | How PDFMark recognizes its own |
+| --- | --- | --- |
+| Bookmark | `PDFOutline` entry after the document's own outline | zero-width space `\u{200B}` appended to the label |
+| Ribbon | `/Stamp` annotation, 24×44 pt, top-right corner | `userName = "PDFMark"` (the `/T` field) |
+| Comment | standard `/Text` note annotation + popup | — (all notes are listed, including Preview's) |
 
-Clicking the menu-bar icon opens a menu showing the current document and page,
-with *Bookmark This Page*, *Add Comment…*, *Show All Comments…*, *Go to
-Bookmark*, *Remove Bookmark*, *Undo*, *Show Introduction…* and *Quit PDFMark*.
+The ribbon and note artwork (`MarkerArt.swift`) is drawn with Core Graphics in
+the annotations' `draw(with:in:)`, which PDFKit bakes into each annotation's
+appearance stream on save — that's why it renders identically in every viewer.
+PDF shadings can't carry transparency (it renders as black), so the artwork uses
+only opaque gradients. A custom key in `documentAttributes` was tried for
+tagging and does **not** survive `PDFDocument.write(to:)`.
+</details>
 
----
-
-## Architecture
+<details>
+<summary><b>Architecture</b></summary>
 
 ```
 Sources/PDFMark/
-├── PDFMarkApp.swift         # @main AppDelegate: menu-bar wiring, hotkey, flow orchestration
-├── StatusIconController.swift # menu-bar item + success/error flash states
-├── PreviewInspector.swift   # AX traversal: current file + page detection + scroll-to-page
-├── BookmarkWriter.swift     # PDFKit: outline entry, ribbon annotation, single-bookmark logic
-├── CommentStore.swift       # PDFKit: read/add/edit/move/delete note annotations
-├── CommentPanel.swift       # the "new comment" panel (page picker, colors, text)
-├── CommentsWindow.swift     # the comments window (list, search, inspector)
-├── PagePicker.swift         # page thumbnails with a draggable note marker
-├── MarkerArt.swift          # vector artwork for the ribbon + note badge (PDF and UI)
-├── UndoHistory.swift        # per-document undo snapshots
-├── Toast.swift              # small confirmation bubble under the menu-bar icon
-├── EditingSupport.swift     # ⌘C/⌘V/⌘X/⌘A/⌘Z in a menu-bar-only app
-├── ConfirmPanel.swift       # the "which page?" confirmation UI
-└── OnboardingWindow.swift   # first-launch intro + live Accessibility status
+├── PDFMarkApp.swift           # @main AppDelegate: menu, flows, login item, app location
+├── StatusIconController.swift # menu-bar item + success/error flash
+├── PreviewInspector.swift     # AX: current file + page, close/reopen, scroll-to-page
+├── BookmarkWriter.swift       # outline entry + ribbon, single-bookmark logic
+├── CommentStore.swift         # read/add/edit/move/delete note annotations
+├── MarkerArt.swift            # vector artwork for ribbon + note badge (PDF, UI, icon)
+├── CommentPanel.swift         # "new comment" panel
+├── CommentsWindow.swift       # comments window (list, search, inspector)
+├── PagePicker.swift           # page thumbnails with a draggable note marker
+├── ConfirmPanel.swift         # "which page?" bookmark panel
+├── UndoHistory.swift          # per-document undo snapshots
+├── Toast.swift                # confirmation bubble under the menu-bar icon
+├── EditingSupport.swift       # ⌘C/⌘V/… in a menu-bar app, window animations
+└── OnboardingWindow.swift     # introduction + live Accessibility status
 ```
 
-- **Language / stack:** Swift, AppKit + PDFKit + ApplicationServices (AX), a
-  sprinkle of SwiftUI for panel content. **No third-party dependencies.**
-- **Build system:** Swift Package Manager executable target (`Package.swift`),
-  hand-bundled into a `.app` by `build.sh` (no Xcode project).
-- **`Spikes/`** holds standalone experiment scripts used while figuring out the AX
-  and PDFKit behaviour — kept for reference, not part of the app build.
+`Spikes/` holds the standalone experiments used to figure out Preview's AX tree
+and PDFKit's behaviour; they're not part of the app build.
+</details>
 
-## Known limitations
+<details>
+<summary><b>Known limitations</b></summary>
 
-- **Global hotkey (`⌥⌘B`)** is wired up but doesn't fire reliably on all setups
-  (a modifier-remap / keyboard-driver quirk was never fully root-caused). The
-  menu-bar click is the primary, reliable trigger.
-- **Right-click Services menu** entry in Preview is registered but not honored by
-  macOS — legacy `NSServices` appear to need a real Developer ID signature.
-- **Notarization** needs a paid Apple Developer account (Developer ID). Until
-  then, downloaded copies need a one-time *Open Anyway* (see Installing), and
-  because ad-hoc signatures change with every release, users re-grant
-  Accessibility after updating.
+- **Not notarized yet** — that needs a paid Apple Developer account. Until then
+  downloads need a one-time *Open Anyway*, and since ad-hoc signatures change
+  with every release, Accessibility must be re-granted after updating.
+- **Global hotkey `⌥⌘B`** is wired up but doesn't fire on every setup; the
+  menu-bar icon is the reliable way in.
+- **Right-click → Services** entry in Preview is registered but not shown by
+  macOS (legacy `NSServices` appear to require a Developer ID signature).
+</details>
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT — see [`LICENSE`](LICENSE). Changes are listed in [`CHANGELOG.md`](CHANGELOG.md).
