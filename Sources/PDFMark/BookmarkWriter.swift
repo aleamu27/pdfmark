@@ -16,37 +16,13 @@ enum BookmarkWriterError: Error, CustomStringConvertible {
     }
 }
 
-/// Draws a small red bookmark-ribbon shape hanging from the top edge of the page.
-/// PDFKit bakes the result of `draw(with:in:)` into the annotation's appearance
-/// stream when the document is written to disk, so this renders identically in
-/// any PDF viewer afterwards (verified against Preview.app), not just inside a
-/// PDFKit-backed view in this app.
+/// The bookmark ribbon hanging from the top edge of the page (artwork in
+/// `MarkerArt.drawRibbon`). PDFKit bakes the result of `draw(with:in:)` into the
+/// annotation's appearance stream when the document is written to disk, so this
+/// renders identically in any PDF viewer afterwards (verified against Preview).
 private final class RibbonAnnotation: PDFAnnotation {
     override func draw(with box: PDFDisplayBox, in context: CGContext) {
-        let b = bounds
-        let notchHeight = b.height * 0.28
-
-        let path = CGMutablePath()
-        path.move(to: CGPoint(x: b.minX, y: b.maxY))
-        path.addLine(to: CGPoint(x: b.maxX, y: b.maxY))
-        path.addLine(to: CGPoint(x: b.maxX, y: b.minY))
-        path.addLine(to: CGPoint(x: b.minX + b.width / 2, y: b.minY + notchHeight))
-        path.addLine(to: CGPoint(x: b.minX, y: b.minY))
-        path.closeSubpath()
-
-        context.saveGState()
-        context.setShadow(offset: CGSize(width: 0, height: -1), blur: 2, color: NSColor.black.withAlphaComponent(0.35).cgColor)
-        context.addPath(path)
-        context.setFillColor(NSColor.systemRed.cgColor)
-        context.fillPath()
-        context.restoreGState()
-
-        context.saveGState()
-        context.addPath(path)
-        context.setStrokeColor(NSColor.red.blended(withFraction: 0.3, of: .black)!.cgColor)
-        context.setLineWidth(0.5)
-        context.strokePath()
-        context.restoreGState()
+        MarkerArt.drawRibbon(in: bounds, context: context)
     }
 }
 
@@ -57,8 +33,8 @@ enum BookmarkWriter {
     /// pre-existing outline structure.
     private static let marker = "\u{200B}"
     private static let annotationAuthor = "PDFMark"
-    private static let ribbonWidth: CGFloat = 22
-    private static let ribbonHeight: CGFloat = 46
+    private static let ribbonWidth: CGFloat = 24
+    private static let ribbonHeight: CGFloat = 44
     private static let ribbonRightMargin: CGFloat = 30
 
     /// Adds a bookmark (outline entry + visible corner ribbon) for the given
@@ -84,6 +60,33 @@ enum BookmarkWriter {
         }
     }
 
+    /// The page (1-indexed) PDFMark's bookmark points at, if the document has one.
+    static func bookmarkedPage(in url: URL) -> Int? {
+        PDFDocument(url: url).flatMap(bookmarkedPage(in:))
+    }
+
+    static func bookmarkedPage(in document: PDFDocument) -> Int? {
+        guard let root = document.outlineRoot else { return nil }
+        for i in 0..<root.numberOfChildren {
+            guard let child = root.child(at: i), let label = child.label, label.contains(marker),
+                  let page = child.destination?.page else { continue }
+            return document.index(for: page) + 1
+        }
+        return nil
+    }
+
+    /// Removes PDFMark's bookmark (outline entry + ribbon), leaving everything
+    /// else in the document untouched.
+    static func removeBookmark(from url: URL) throws {
+        guard let document = PDFDocument(url: url) else {
+            throw BookmarkWriterError.couldNotOpenDocument
+        }
+        removeExistingBookmark(from: document)
+        guard document.write(to: url) else {
+            throw BookmarkWriterError.writeFailed
+        }
+    }
+
     private static func removeExistingBookmark(from document: PDFDocument) {
         if let root = document.outlineRoot {
             let newRoot = PDFOutline()
@@ -99,7 +102,8 @@ enum BookmarkWriter {
 
         for pageIndex in 0..<document.pageCount {
             guard let page = document.page(at: pageIndex) else { continue }
-            for annotation in page.annotations where annotation.userName == annotationAuthor {
+            // Only the ribbon stamp — never touch notes/comments or anything else.
+            for annotation in page.annotations where annotation.userName == annotationAuthor && annotation.type == "Stamp" {
                 page.removeAnnotation(annotation)
             }
         }

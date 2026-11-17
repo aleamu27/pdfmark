@@ -24,10 +24,21 @@ final class StatusIconController {
 
     private func flash(systemName: String) {
         revertTimer?.invalidate()
-        statusItem.button?.image = Self.image(systemName: systemName, accessibilityDescription: "PDFMark")
+        setImage(systemName)
         revertTimer = Timer.scheduledTimer(withTimeInterval: flashDuration, repeats: false) { [weak self] _ in
-            self?.statusItem.button?.image = Self.image(systemName: "bookmark", accessibilityDescription: "PDFMark")
+            self?.setImage("bookmark")
         }
+    }
+
+    /// Cross-fades between icons instead of snapping.
+    private func setImage(_ systemName: String) {
+        guard let button = statusItem.button else { return }
+        button.wantsLayer = true
+        let fade = CATransition()
+        fade.type = .fade
+        fade.duration = 0.2
+        button.layer?.add(fade, forKey: "iconFade")
+        button.image = Self.image(systemName: systemName, accessibilityDescription: "PDFMark")
     }
 
     private static func image(systemName: String, accessibilityDescription: String) -> NSImage? {

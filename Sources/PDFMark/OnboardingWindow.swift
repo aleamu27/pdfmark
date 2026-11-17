@@ -24,7 +24,7 @@ enum OnboardingWindow {
 
         if controller == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 460),
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 540),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
@@ -32,7 +32,10 @@ enum OnboardingWindow {
             window.title = "Welcome to PDFMark"
             window.isReleasedWhenClosed = false
             window.center()
-            window.contentView = NSHostingView(rootView: OnboardingView())
+            let host = NSHostingView(rootView: OnboardingView())
+            window.contentView = host
+            window.setContentSize(host.fittingSize)
+            window.center()
             controller = NSWindowController(window: window)
         }
 
@@ -48,12 +51,12 @@ private struct OnboardingView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(spacing: 8) {
-                Image(systemName: "bookmark.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.red)
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 72, height: 72)
                 Text("Welcome to PDFMark")
                     .font(.title2.bold())
-                Text("Set a real bookmark on the page you're reading in Preview, without leaving the keyboard.")
+                Text("Bookmark pages and add comments to the PDFs you read in Preview — saved right in the file.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -62,9 +65,9 @@ private struct OnboardingView: View {
 
             VStack(alignment: .leading, spacing: 14) {
                 step(number: "1", text: "Open a PDF in Preview and scroll to the page you want to mark.")
-                step(number: "2", text: "Click the bookmark icon in the menu bar at the top of the screen.")
-                step(number: "3", text: "Confirm the page number in the box that appears, and press Enter.")
-                step(number: "4", text: "The bookmark is saved directly in the PDF file — visible in Preview's table of contents (⌘⌥3) and as a small red ribbon on the page itself.")
+                step(number: "2", text: "Click the bookmark icon in the menu bar and choose Bookmark This Page or Add Comment…")
+                step(number: "3", text: "For a comment, drag the note to the spot you want — on either page of a spread — and type your text.")
+                step(number: "4", text: "Use Show All Comments… to edit, move, recolor or delete notes. Every change can be undone from the menu.")
             }
 
             Divider()
@@ -82,19 +85,23 @@ private struct OnboardingView: View {
                     Text(accessibilityTrusted ? "Access granted" : "Access not granted yet")
                         .font(.callout)
                     Spacer()
-                    Button(accessibilityTrusted ? "Check again" : "Grant access…") {
-                        requestAccess()
+                    if !accessibilityTrusted {
+                        Button("Grant access…") { requestAccess() }
                     }
                 }
+                .animation(.easeInOut(duration: 0.25), value: accessibilityTrusted)
 
                 if !accessibilityTrusted {
-                    Text("Just granted access in System Settings but still seeing orange here? macOS requires PDFMark to be restarted (quit and reopen the app) before the change takes effect.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Already switched PDFMark on in System Settings? macOS applies it after a restart of PDFMark.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Restart PDFMark") { AppLocation.relaunch() }
+                            .controlSize(.small)
+                    }
                 }
             }
-
-            Spacer()
 
             HStack {
                 Spacer()
@@ -105,7 +112,12 @@ private struct OnboardingView: View {
             }
         }
         .padding(24)
-        .frame(width: 420, height: 460)
+        .frame(width: 460)
+        .fixedSize(horizontal: false, vertical: true)
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+            let trusted = AXIsProcessTrusted()
+            if trusted != accessibilityTrusted { accessibilityTrusted = trusted }
+        }
     }
 
     private func step(number: String, text: String) -> some View {
@@ -117,7 +129,8 @@ private struct OnboardingView: View {
                 .foregroundStyle(.red)
             Text(text)
                 .font(.callout)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
     }
 

@@ -17,6 +17,10 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 cp "$BIN_PATH" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 cp "$ROOT/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
+cp "$ROOT/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+# Dev builds keep their own bundle id, so the Accessibility grant for the
+# installed release (no.pdfmark.app) and for dev iterations never collide.
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier no.pdfmark.app.dev2" "$APP_BUNDLE/Contents/Info.plist"
 
 # Sign with a STABLE identity so macOS keeps the granted Accessibility
 # permission across rebuilds. Ad-hoc (`--sign -`) has no stable designated
