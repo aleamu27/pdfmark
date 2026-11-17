@@ -31,3 +31,6 @@ Spikes/verify_outline3
 Spikes/write_original_test
 Spikes/write_test
 Spikes/dump1.txt
+
+# Release output
+dist/

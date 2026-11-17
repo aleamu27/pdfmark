@@ -13,6 +13,27 @@ final class ConfirmPanel: NSPanel {
     override func cancelOperation(_ sender: Any?) {
         onCancel?()
     }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        EditingShortcuts.handle(event, from: self) || super.performKeyEquivalent(with: event)
+    }
+}
+
+extension NSPanel {
+    /// Places the panel just below-right of the mouse, clamped to the screen.
+    func positionNearMouse() {
+        let mouseLocation = NSEvent.mouseLocation
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) }) ?? NSScreen.main else {
+            center()
+            return
+        }
+
+        var origin = CGPoint(x: mouseLocation.x + 12, y: mouseLocation.y - frame.height - 12)
+        let visible = screen.visibleFrame
+        origin.x = min(max(origin.x, visible.minX), visible.maxX - frame.width)
+        origin.y = min(max(origin.y, visible.minY), visible.maxY - frame.height)
+        setFrameOrigin(origin)
+    }
 }
 
 final class ConfirmPanelController {
@@ -63,8 +84,8 @@ final class ConfirmPanelController {
             onCancel()
         }
 
-        positionNearMouse(panel)
-        panel.makeKeyAndOrderFront(nil)
+        panel.positionNearMouse()
+        panel.presentAnimated()
 
         self.panel = panel
         resetAutoCloseTimer(onCancel: onCancel)
@@ -73,7 +94,7 @@ final class ConfirmPanelController {
     func close() {
         autoCloseTimer?.invalidate()
         autoCloseTimer = nil
-        panel?.orderOut(nil)
+        panel?.dismissAnimated()
         panel = nil
     }
 
@@ -83,23 +104,6 @@ final class ConfirmPanelController {
             self?.close()
             onCancel()
         }
-    }
-
-    private func positionNearMouse(_ panel: NSPanel) {
-        let mouseLocation = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) }) ?? NSScreen.main else {
-            panel.center()
-            return
-        }
-
-        var origin = CGPoint(x: mouseLocation.x + 12, y: mouseLocation.y - panel.frame.height - 12)
-        let frame = panel.frame
-        let visible = screen.visibleFrame
-
-        origin.x = min(max(origin.x, visible.minX), visible.maxX - frame.width)
-        origin.y = min(max(origin.y, visible.minY), visible.maxY - frame.height)
-
-        panel.setFrameOrigin(origin)
     }
 }
 
